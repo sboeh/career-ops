@@ -1,0 +1,45 @@
+# {{NAME}}
+
+{{PHONE}} | {{EMAIL}} | [{{LINKEDIN_DISPLAY}}]({{LINKEDIN_URL}}) | [{{PORTFOLIO_DISPLAY}}]({{PORTFOLIO_URL}}) | {{LOCATION}}
+
+---
+
+## {{SECTION_SUMMARY}}
+
+{{SUMMARY_TEXT}}
+
+---
+
+## {{SECTION_COMPETENCIES}}
+
+{{COMPETENCIES}}
+
+---
+
+## {{SECTION_EXPERIENCE}}
+
+{{EXPERIENCE}}
+
+---
+
+## {{SECTION_PROJECTS}}
+
+{{PROJECTS}}
+
+---
+
+## {{SECTION_EDUCATION}}
+
+{{EDUCATION}}
+
+---
+
+## {{SECTION_CERTIFICATIONS}}
+
+{{CERTIFICATIONS}}
+
+---
+
+## {{SECTION_SKILLS}}
+
+{{SKILLS}}
