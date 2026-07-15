@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     REFERENCE EXAMPLE for templates/cover-letter-template-styled.html
+     (see modes/pdf-dach.md)
+
+     Fully filled counterpart of the styled cover letter template: the real
+     VaroPreem letter (report 189, 01.07.2026) with every placeholder resolved.
+     Use it as ground truth when filling the template:
+       - {{RECIPIENT_BLOCK}}: "An:" + name/company in <span class="addr-bold">
+         + street + city, separated by newlines (white-space: pre-line)
+       - {{ACHIEVEMENTS_BLOCK}}: ul.achievements with
+         <span class="lead">Topic:</span> bold navy lead-ins
+       - {{CLOSING_BLOCK}}: sign-off + optional
+         <img class="signature-img" src="../config/signature.png"> + typed name
+       - footer contact bar is position:fixed and repeats on every page
+     Render: node generate-pdf.mjs <this-file> <out.pdf> --format=a4
+     (the pdf-margin meta tag makes generate-pdf.mjs render full-bleed).
+     ============================================================================ -->
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="pdf-margin" content="0">
+<title>Cover Letter — Sebastian Böhmer</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "clig" 0, "dlig" 0;
+  }
+
+  html {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    font-family: 'Calibri', 'Carlito', 'Liberation Sans', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.3;
+    color: #494949;
+    background: #ffffff;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .page {
+    width: 100%;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 7mm 14mm 24mm;
+  }
+
+  .letter-head { margin-bottom: 4mm; }
+  .letter-head h1 {
+    font-size: 32pt;
+    font-weight: 700;
+    color: #213D78;
+    line-height: 1.05;
+  }
+  .letter-head .headline {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #213D78;
+  }
+
+  .recipient-box {
+    background: linear-gradient(180deg, #F2FAFE 0%, #E8F6FC 100%);
+    border-radius: 8mm;
+    padding: 5mm 10mm;
+    margin-bottom: 5mm;
+  }
+  .recipient-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .recipient-address { white-space: pre-line; }
+  .recipient-address .addr-bold { font-weight: 700; }
+  .letter-date { white-space: nowrap; }
+  .greeting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-top: 4mm;
+  }
+  .re-line { color: #494949; }
+
+  .letter-body p { margin-bottom: 3.5mm; text-align: justify; }
+
+  ul.achievements { list-style: none; margin-bottom: 3.5mm; }
+  ul.achievements li {
+    position: relative;
+    padding-left: 16px;
+    margin-bottom: 2mm;
+    text-align: justify;
+  }
+  ul.achievements li::before {
+    content: "\2022";
+    position: absolute;
+    left: 2px;
+    color: #027BB8;
+    font-weight: 700;
+  }
+  .lead { color: #213D78; font-weight: 700; }
+
+  .language-closing { font-style: italic; margin-bottom: 4.5mm; }
+
+  .signoff { margin-top: 3mm; }
+  .signature-img { height: 13mm; margin: 1.5mm 0 1mm; display: block; }
+  .signature-name { }
+
+  .footnotes { margin-top: 6mm; padding-top: 2mm; border-top: 0.5pt solid #cccccc; }
+  .footnotes p { font-size: 8pt; color: #888888; line-height: 1.3; margin-bottom: 1mm; text-align: left; }
+
+  .contact-footer {
+    position: fixed;
+    left: 14mm;
+    right: 14mm;
+    bottom: 4mm;
+    background: linear-gradient(180deg, #F2FAFE 0%, #E8F6FC 100%);
+    border-radius: 8mm;
+    padding: 3.5mm 6mm;
+    text-align: center;
+    font-size: 9.5pt;
+    color: #027BB8;
+  }
+  .contact-footer .contact-item {
+    display: inline-block;
+    margin: 0 2.5mm;
+    white-space: nowrap;
+  }
+  .contact-footer svg {
+    width: 13px;
+    height: 13px;
+    stroke: #027BB8;
+    vertical-align: -2px;
+    margin-right: 5px;
+  }
+  .contact-footer a[href^="http"], .contact-footer a[href^="https"] { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="contact-footer">
+  <span class="contact-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#027BB8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><a href="tel:+491749473379">+49 174 947 3379</a>
+  </span>
+  <span class="contact-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#027BB8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6 12 13 2 6"/></svg><a href="mailto:mail@sebastianboehmer.com">mail@sebastianboehmer.com</a>
+  </span>
+  <span class="contact-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#027BB8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>D-20249 Hamburg</span>
+  </span>
+  <span class="contact-item">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#027BB8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg><a href="https://linkedin.com/in/sebastian-boehmer-881a269">sebastian-boehmer-881a269</a>
+  </span>
+</div>
+
+<div class="page">
+
+  <div class="letter-head">
+    <h1>Sebastian Böhmer</h1>
+    <div class="headline">Wirtschaftsingenieur Maschinenbau (Dipl.-Ing.)</div>
+  </div>
+
+  <div class="recipient-box">
+    <div class="recipient-row">
+      <div class="recipient-address">An:
+<span class="addr-bold">Jasmin Sieger</span>
+<span class="addr-bold">VARO Energy Germany GmbH</span>
+Am Sandtorkai 77
+D-20457 Hamburg</div>
+      <div class="letter-date">01. Juli 2026</div>
+    </div>
+    <div class="greeting-row">
+      <div class="greeting">Sehr geehrte Frau Sieger,</div>
+      <div class="re-line">Re: Bewerbung als Project Management Officer (m/w/d)</div>
+    </div>
+  </div>
+
+  <div class="letter-body">
+    <p>VAROPreem hat im Januar 2026 zwei führende europäische Energieunternehmen zusammengeführt und steht jetzt vor der Aufgabe, diesen Zusammenschluss im laufenden Betrieb in konkretes Wachstum zu übersetzen. Genau diese Phase, von der Integration zur nachhaltigen Transformation, habe ich in meiner Beratungslaufbahn mehrfach von außen begleitet; jetzt will ich sie von innen steuern.</p>
+    <p>Als Wirtschaftsingenieur mit 10+ Jahren in PMO-Leitung, strategischen Transformationsprogrammen und M&amp;A-Integration, bei PwC, acondas, Targus und meiner eigenen Beratung Simpla Solutions, habe ich komplexe Initiativen für Energiekonzerne, Industrieunternehmen und globale Logistikdienstleister gesteuert. Ich strukturiere vielschichtige Fragestellungen, entwickle fundierte Entscheidungsvorlagen für das Top-Management und sorge für die konsequente Umsetzung entlang klar definierter Prioritäten.</p>
+
+    <p style="margin-bottom: 1.5mm;">Einige konkrete Belege:</p>
+    <ul class="achievements">
+      <li><span class="lead">Carve-Out-Steuerung bei einem DAX-Energiekonzern:</span> neue Finanzorganisationsstruktur konzipiert mit Rollenprofilen und Mitarbeiter-Transferlisten, Pensionskassen-Outsourcing in eine externe CTA-Struktur mit externem Asset Management koordiniert, Abstimmung mit Recht, HR und Finance sichergestellt</li>
+      <li><span class="lead">PMO-Lead für ein globales Accounting Shared Service Center</span> eines führenden Logistikkonzerns: Programmsteuerung und monatliches Varianz-Reporting auf Vorstandsebene gegen einen Business Case mit EUR 630M Einsparpotenzial über 10 Jahre, simultane Multi-Länder-Implementierung mit Risikoübersicht während der Aktivitätstransfers</li>
+      <li><span class="lead">Performance-Programm mit EUR 100M Einsparziel</span> bei einem deutschen Energieversorger: 200 Maßnahmen mit Fachabteilungen zu konkreten Schritten detailliert, Meilensteine abgestimmt, Tracking-Tool entwickelt und an internes PMO übergeben</li>
+      <li><span class="lead">Stage-Gate-Governance neu aufgebaut</span> für ein PE-geführtes Unternehmen in der Transformation: 80+ Ideen zu 25 priorisierten Projekten verdichtet, EUR 5M-Portfolio mit Finance-ROI-Bewertung gesteuert, lokale Projektmanager in PM-Methodik geschult</li>
+      <li><span class="lead">Digitalisierung von Purchase-to-Pay-Prozessen</span> bei einem führenden Industriekonzern: Einkauf, Logistik und Buchhaltung auf neue Workflows abgestimmt, Reduktion der Bearbeitungszeit in der Piloteinheit um 30%</li>
+    </ul>
+
+    <p>Die Herausforderung bei VAROPreem liegt darin, M&amp;A-Integration, Commercial-Fokus und strategische Weiterentwicklung als parallele Workstreams koordiniert zu halten, mit messbarem Impact und ohne Reibungsverluste an den Schnittstellen. Mein erster Schritt wäre, die laufenden strategischen Initiativen auf Basis bestehender oder neu zu entwickelnder Business Cases nach Implementierungsreife zu strukturieren und zu priorisieren. Dabei bringe ich Erfahrung in Organisationsaufbau, Prozessoptimierung und Transformation mit, die es mir erlaubt, sowohl die konzeptionelle Grundlage als auch die operative Umsetzung zu übernehmen.</p>
+    <p>Ich freue mich auf ein erstes Gespräch.</p>
+
+    <div class="signoff">
+      <div>Mit freundlichen Grüßen,</div>
+      <img class="signature-img" src="../config/signature.png" alt="Unterschrift Sebastian Böhmer">
+      <div class="signature-name">Sebastian Böhmer</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

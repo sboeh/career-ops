@@ -2,14 +2,26 @@
 cv.md
 data/applications.md
 data/applications.db
+data/application-history.md
 data/pipeline.md
 data/scan-history.tsv
+data/pdf-index.tsv
 data/parser-output/**/*.json
 !data/parser-output/.gitkeep
 !data/parser-output/**/.gitkeep
 data/cache/ats-companies/
 reports/*.md
 !reports/.gitkeep
+
+# Photo, signature, and other personal media
+config/*.png
+config/*.jpg
+config/*.jpeg
+
+# Generated CV/cover working files and compiled binaries
+cv-temp-*.html
+cv-cover-*.html
+dashboard/career-dashboard.exe
 output/*
 !output/.gitkeep
 batch/logs/*

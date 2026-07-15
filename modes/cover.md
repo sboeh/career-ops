@@ -38,6 +38,8 @@ Read `article-digest.md` if it exists — supplementary proof points and metrics
 
 Read `modes/_profile.md` if it exists — the candidate's personalization file. It captures their target roles, adaptive framing and archetypes, exit narrative, cross-cutting advantage, proof points, comp targets, negotiation scripts, location policy, and any voice or writing-style rules they have added. Its rules **govern the letter's voice and structure and override the generic defaults in this mode**, so the candidate's personalization is never lost.
 
+**Confidentiality (client/employer names):** Read `config/profile.yml` → `confidentiality`. If `rule: anonymise_by_default`, any past client or employer named in an achievement bullet must be replaced with a descriptor from `anonymisation_patterns` (matched by sector/industry) unless that exact name appears in `approved_real_names`. This applies whenever a bullet in Step 7 would otherwise name a client directly — describe the engagement generically instead (e.g. "a pharma carve-out" rather than the real company). If no `anonymisation_patterns` entry fits the client's sector confidently, ask the candidate rather than guessing. If `confidentiality` is absent from `profile.yml`, skip this step — no anonymization is applied.
+
 ---
 
 ## Step 2 — Parse the JD
@@ -198,6 +200,7 @@ Select 4-5 achievement bullets from `cv.md` only (`article-digest.md` may be rea
 3. Pick the 4-5 highest-scoring, with at least one metric per bullet
 4. Use the exact wording and metrics from cv.md — never paraphrase or invent
 5. Apply keyword mirroring from Step 4 to the vocabulary around each bullet (not the metrics)
+6. Apply the confidentiality rule from Step 1: if the client/employer behind a bullet is not in `approved_real_names`, describe the engagement without naming it (sector/descriptor only), per `anonymisation_patterns`
 
 Format: `**Bold lead phrase,** one sentence of impact with metric.`
 
@@ -250,6 +253,16 @@ End the draft with: "How does this read? Once you approve I'll generate the PDF.
 
 ---
 
+## ATS Rules (clean parsing)
+
+- UTF-8, selectable text (not rasterized) — never generate the letter as a flattened image
+- No text in images/SVGs; the signature image (if used) is decorative only and carries no content an ATS needs to parse
+- No critical info in PDF headers/footers (ATS ignores them) — role title, dates, and the ask must live in the body
+- No hidden text, keyword stuffing, or white-font tricks — keywords (Step 4) are woven naturally, once each, never repeated for density
+- No nested tables; the achievements list is a single flat `<ul>`, never a table
+- fi/fl ligatures disabled at render time (`font-variant-ligatures: none` in both cover letter templates) so PDF text extraction doesn't merge letter pairs into a single glyph an ATS keyword search would miss
+- Keywords distributed across the letter, not clustered: opening (1-2 ATS-critical terms), achievements (tool/methodology names), problems section (domain terms) — see Step 4
+
 ## Language rules (enforced in every sentence)
 
 1. **Active voice only** — never "was delivered", "has been built", "were led"
@@ -301,6 +314,8 @@ Assemble the JSON payload:
 }
 ```
 
+**Filename convention:** `output/{company-slug}-{role-slug}-cover.pdf` in paste mode (no report number in context). **In slug mode** (`/career-ops cover {slug}` — a report number is known), prefix the filename with it and append the letter's date, matching the CV PDF convention (`{num}-{company-slug}-{role-slug}-{YYYY-MM-DD}.pdf`): `output/{report-num}-{company-slug}-{role-slug}-{YYYY-MM-DD}-cover.pdf` (e.g. `output/067-parloa-technical-program-manager-2026-07-13-cover.pdf`). Use `letter.date` (converted to `YYYY-MM-DD` if it was written in a different display format for the letter body).
+
 Write payload to `/tmp/cover-payload-{company-slug}.json`.
 
 Run:
@@ -330,4 +345,5 @@ When invoked as `/career-ops cover {slug}`:
 2. Extract the `## Cover Letter Draft` section — use it as a pre-populated starting point for the draft
 3. Run all steps as normal (research, keywords, prompts, gaps) — the draft is a starting point, not the final output
 4. When presenting the draft in Step 8, show what was auto-generated and what was changed based on the user's answers
-5. After PDF generation, update the report's `## Cover Letter Draft` section with a note: `PDF generated: output/{path} on {date}`
+5. In Step 9, use the report-number-prefixed filename with date: `output/{report-num}-{company-slug}-{role-slug}-{YYYY-MM-DD}-cover.pdf`
+6. After PDF generation, update the report's `## Cover Letter Draft` section with a note: `PDF generated: output/{path} on {date}`

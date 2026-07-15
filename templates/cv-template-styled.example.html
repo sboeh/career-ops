@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<!-- ============================================================================
+     REFERENCE EXAMPLE for templates/cv-template-styled.html (see modes/pdf-dach.md)
+
+     Fully filled counterpart of the styled template: a real 2-page German CV
+     (report 189, VaroPreem) with every placeholder resolved. Use it as ground
+     truth when filling the template:
+       - job blocks: .job > .job-head (.job-co + .job-meta) + ul.dash with
+         <span class="lead">Client - Topic:</span> bullet lead-ins
+       - manual pagination: <div class="page-break"></div> + .mini-band snippet
+         inserted inside the experience section at the desired page boundary
+       - skills: .skill-row (.skill-category + .skill-list), education: .edu,
+         certifications: .cert-row
+       - photo: <img class="cv-photo" src="..."> (path relative to this file,
+         or a data: URL)
+     Render: node generate-pdf.mjs <this-file> <out.pdf> --format=a4
+     (the pdf-margin meta tag makes generate-pdf.mjs render full-bleed).
+     ============================================================================ -->
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="pdf-margin" content="0">
+<title>Sebastian Böhmer — CV</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "clig" 0, "dlig" 0;
+  }
+
+  html {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    font-family: 'Calibri', 'Carlito', 'Liberation Sans', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.24;
+    color: #494949;
+    background: #ffffff;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .page { width: 100%; max-width: 210mm; margin: 0 auto; }
+
+  .band {
+    position: relative;
+    margin: 3mm 4mm 0;
+    padding: 6.5mm 10mm;
+    min-height: 42mm;
+    background: linear-gradient(180deg, #F2FAFE 0%, #E8F6FC 100%);
+    border-radius: 8mm;
+  }
+
+  .band h1 {
+    font-size: 36pt;
+    font-weight: 700;
+    color: #213D78;
+    letter-spacing: 0.01em;
+    line-height: 1.05;
+    margin-bottom: 2px;
+  }
+
+  .band .headline {
+    font-size: 14pt;
+    font-weight: 700;
+    color: #213D78;
+    margin-bottom: 8px;
+  }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 62mm 80mm;
+    grid-row-gap: 6px;
+    font-size: 10.5pt;
+    color: #027BB8;
+  }
+
+  .contact-item { display: flex; align-items: center; gap: 8px; }
+  .contact-item svg { width: 15px; height: 15px; flex: 0 0 15px; stroke: #027BB8; }
+  .contact-item a[href^="http"], .contact-item a[href^="https"] { text-decoration: underline; }
+
+  .cv-photo {
+    position: absolute;
+    top: 6.5mm;
+    bottom: 6.5mm;
+    right: 10mm;
+    width: 31mm;
+    height: auto;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+
+  .mini-band {
+    position: relative;
+    padding: 5mm 10mm 4mm;
+    min-height: 24mm;
+    margin: 4mm -10mm 4mm;
+    background: linear-gradient(180deg, #F2FAFE 0%, #E8F6FC 100%);
+    border-radius: 8mm;
+  }
+  .mini-band h1 { font-size: 36pt; font-weight: 700; color: #213D78; line-height: 1.05; }
+  .mini-band .headline { font-size: 14pt; font-weight: 700; color: #213D78; }
+
+  .page-break { break-after: page; page-break-after: always; }
+
+  .content { padding: 3mm 14mm 0; }
+
+  .section { margin-bottom: 9px; }
+
+  .sec-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 3px;
+  }
+  .sec-head svg { width: 20px; height: 20px; stroke: #213D78; flex: 0 0 17px; }
+  .section-title {
+    font-size: 14pt;
+    font-weight: 700;
+    color: #213D78;
+    text-transform: uppercase;
+  }
+  .sec-rule {
+    border: 0;
+    border-top: 1.4px solid #213D78;
+    margin: 0 0 7px 0;
+  }
+
+  .summary-text { text-align: justify; margin-bottom: 6px; }
+
+  /* inline-block layout instead of flex: WeasyPrint (preview renderer)
+     paints borders of blockified flex items twice, which showed as a
+     double frame around each pill. inline-block renders one clean border
+     in both WeasyPrint and Chromium. */
+  .competencies-grid {
+    text-align: center;
+    padding: 2px 0;
+  }
+  .competency-tag {
+    display: inline-block;
+    border: 1pt solid #6FC0EA;
+    border-radius: 7px;
+    background: #E8F6FC;
+    color: #027BB8;
+    font-size: 10pt;
+    padding: 2px 9px;
+    margin: 2px 2px;
+    white-space: nowrap;
+  }
+
+  .job { margin-bottom: 6px; }
+  .job-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 2px;
+  }
+  .job-co { font-weight: 700; color: #213D78; font-size: 11pt; }
+  .job-co .job-note { font-weight: 400; color: #494949; }
+  .job-meta { font-weight: 700; color: #213D78; font-size: 11pt; white-space: nowrap; }
+
+  ul.dash { list-style: none; }
+  ul.dash li {
+    position: relative;
+    padding-left: 16px;
+    margin-bottom: 2.5px;
+    text-align: justify;
+  }
+  ul.dash li::before {
+    content: "\2013";
+    position: absolute;
+    left: 0;
+    color: #027BB8;
+    font-weight: 700;
+  }
+  .lead { color: #027BB8; font-weight: 700; }
+
+  .skill-row { display: flex; gap: 6mm; margin-bottom: 5px; }
+  .skill-category { flex: 0 0 34mm; color: #027BB8; }
+  .skill-list { flex: 1; text-align: justify; }
+
+  .edu { margin-bottom: 6px; }
+  .edu-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .edu-title { font-weight: 700; color: #213D78; font-size: 11pt; }
+  .edu-title .edu-note { font-weight: 400; color: #494949; }
+  .edu-year { font-weight: 700; color: #213D78; font-size: 11pt; white-space: nowrap; }
+
+  .cert-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 3px;
+  }
+  .cert-name { font-weight: 700; color: #213D78; font-size: 11pt; }
+  .cert-name .cert-issuer { font-weight: 400; color: #494949; }
+  .cert-year { font-weight: 700; color: #213D78; font-size: 11pt; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="band">
+    <img class="cv-photo" src="../config/candidate-photo.png" alt="Sebastian Böhmer">
+    <h1>Sebastian Böhmer</h1>
+    <div class="headline">Wirtschaftsingenieur Maschinenbau (Dipl.-Ing.)</div>
+    <div class="contact-grid">
+      <div class="contact-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#027BB8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <a href="tel:+491749473379">+49 174 947 3379</a>
+      </div>
+      <div class="contact-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#027BB8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6 12 13 2 6"/></svg>
+        <a href="mailto:mail@sebastianboehmer.com">mail@sebastianboehmer.com</a>
+      </div>
+      <div class="contact-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#027BB8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span>D-20249 Hamburg</span>
+      </div>
+      <div class="contact-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#027BB8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+        <a href="https://linkedin.com/in/sebastian-boehmer-881a269">linkedin.com/in/sebastian-boehmer-881a269</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="section">
+      <div class="sec-head">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#213D78" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg>
+        <span class="section-title">Profil &amp; Kompetenzen</span>
+      </div>
+      <hr class="sec-rule">
+      <div class="summary-text">Wirtschaftsingenieur und Management Consultant mit 10+ Jahren Erfahrung in der Steuerung strategischer Transformationsprogramme, PMO-Leitung und M&amp;A-Integration - in Energie, Industrie und Logistik. Nach Stationen bei PwC, acondas, Targus und als Gründer von Simpla Solutions GmbH suche ich jetzt eine strategische Festanstellung, um operative Transformation und Post-Merger-Integration nachhaltig von innen zu steuern. Kernerfahrung: Business-Case-Entwicklung, Top-Management-Entscheidungsvorlagen, Cross-funktionale Stakeholder-Koordination und Governance in Programmen mit bis zu EUR 200M Umfang. Energiesektor Kompetenz: Carve-Outs und Performance-Programme bei führenden deutschen Energiekonzernen.</div>
+      <div class="competencies-grid">
+        <span class="competency-tag">PMO-Leitung &amp; Programmsteuerung</span>
+        <span class="competency-tag">Strategische Initiativen &amp; Transformation</span>
+        <span class="competency-tag">Stakeholder-Management (C-Level)</span>
+        <span class="competency-tag">M&amp;A / Carve-Out &amp; Integration</span>
+        <span class="competency-tag">Business Cases &amp; Entscheidungsvorlagen</span>
+        <span class="competency-tag">Energiesektor &amp; Regulierungsumfeld</span>
+        <span class="competency-tag">Stage-Gate-Governance &amp; Portfolio-Management</span>
+        <span class="competency-tag">Datenanalyse, Power BI &amp; SAP</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-head">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#213D78" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+        <span class="section-title">Berufserfahrung</span>
+      </div>
+      <hr class="sec-rule">
+
+      <div class="job">
+        <div class="job-head">
+          <div class="job-co">Simpla Solutions GmbH – Gründer &amp; Geschäftsführer <span class="job-note">(Unternehmensberatung)</span></div>
+          <div class="job-meta">Hamburg | Jan 2019 – heute</div>
+        </div>
+        <ul class="dash">
+          <li><span class="lead">Führender Hersteller von Flurförderfahrzeugen - Data Analytics &amp; Audit:</span> Konzipierte und implementierte ein Excel-basiertes Audit-Analytics-Tool für ein Team von 8 Internal Auditors; migrierte die Stichprobenmethodik auf Grundgesamtheit mit automatisierter Anomalie-Erkennung (e.g. Geisterlieferant) (3 Monate)</li>
+          <li><span class="lead">Führender europäischer HVAC-Hersteller - Supply Chain &amp; Inventory Management:</span> Interim-Manager für SCM-Transformation; verbesserte Liefertreue durch Ad-hoc-Maßnahmen an 5 europäischen Werken; reduzierte Lagerbestände via ABC-XYZ-Analyse und SAP-IBP-Parameteroptimierung; entwickelte Target-State-SCM-Organisation und wöchentliche Inventory-Dashboards (Power BI) (19 Monate)</li>
+          <li><span class="lead">Führender europäischer Automobilzulieferer - Cross-funktionales PM &amp; IT-Analyse:</span> Zentralisierte PM-Funktionen für Training und Reporting der europäischen Division; harmonisierte Projektprioritäten, Genehmigungsebenen und Reporting-Strukturen; definierte Kapazitäts- und Anfrageprozesse für &gt;2.000 IT-System-Projektanfragen (Service-Level 1-3) (4 Monate)</li>
+          <li><span class="lead">Deutsche Tochter von internationalem Chemieunternehmen - PMO Transformationsprogramm:</span> PMO-Lead für PE-geführtes Unternehmen: 80+ Ideen priorisiert und 25 Projekte via Stage-Gate-Prozess gestartet (Produktion, Logistik, Shared Services); Portfolio-Umfang ca. EUR 5M; Governance, Reporting und ROI-Bewertung mit Finance etabliert; lokale Projektmanager in PM-Methodik und Investitionsrechnung trainiert (7 Monate)</li>
+          <li><span class="lead">DAX-30-Energiekonzern - Carve-Out Finance &amp; Pensionskasse:</span> Gestaltete neue Finanzorganisationsstruktur mit Rollenprofilen und Mitarbeitertransferlisten; koordinierte Outsourcing der Pensionskasse und Treuhandvereinbarungen in neue externe CTA-Struktur mit externem Asset Management; unterstützte Projektmanagement, Reporting und Stakeholder-Koordination (6 Monate)</li>
+        </ul>
+      </div>
+
+      <div class="job">
+        <div class="job-head">
+          <div class="job-co">Targus Management Consulting AG – Consultant</div>
+          <div class="job-meta">Ratingen | Jun 2021 – Okt 2022</div>
+        </div>
+        <ul class="dash">
+          <li><span class="lead">Schienenfahrzeughersteller - Komponenten-Ausschreibung:</span> Definierte und schärfte TOP-10-Komponenten in einem EUR 1,3-Mrd.-Projekt; erzielte bis zu 20% Einsparungen trotz Inflation; überarbeitete Ausschreibungsunterlagen und Zuschlagskriterien; entwickelte Verhandlungs- und Vergabestrategien je Komponente (5 Monate)</li>
+          <li><span class="lead">Hersteller von Medizintechnik - Obsoleszenz Management:</span> Reduzierte Obsoleszenz Risiko für &gt;200 Produkte mit elektronischen Bauteilen in 4 Tochtergesellschaften; identifizierte &gt;100 Risiko-Bauteile; implementierte Screening-Prozess mit Mitarbeiterschulung (5 Monate)</li>
+          <li><span class="lead">Internationales Pharmaunternehmen - OEE &amp; Maintenance:</span> Studie zu Durchsatzverbesserung und Zykluszeit-Reduktion; erhöhte Anlagenverfügbarkeit durch Shift zu vorbeugender Instandhaltung (3 Monate)</li>
+        </ul>
+      </div>
+
+      <div class="page-break"></div>
+
+      <div class="mini-band">
+        <h1>Sebastian Böhmer</h1>
+        <div class="headline">Wirtschaftsingenieur Maschinenbau (Dipl.-Ing.)</div>
+      </div>
+
+      <div class="job">
+        <div class="job-head">
+          <div class="job-co">acondas GmbH – Senior Projekt Berater</div>
+          <div class="job-meta">Hamburg | Mai 2017 – Sep 2018</div>
+        </div>
+        <ul class="dash">
+          <li><span class="lead">DAX-Industriekonzern - Purchase-to-Pay-Digitalisierung:</span> Digitale Transformation der Purchase-to-Pay-Prozesse; Abstimmung von Einkauf, Logistik und Buchhaltung auf neue Workflows; Reduzierung der durchschnittlichen Bearbeitungszeit um 30% in der Piloteinheit; Ausweitung der optimierten Prozesse von Katalogwaren auf Projektgeschäft und Serienproduktion (4 Monate)</li>
+          <li><span class="lead">Energiekonzern - Carve-Out &amp; Rechtsrestrukturierung:</span> Teilprojektleitung: rechtliche Restrukturierung und Carve-Out von Verwaltungsfunktionen in Tochtergesellschaften (GmbH-Umwandlungen und Fusionen); Analyse rechtlicher, steuerlicher und finanzieller Auswirkungen verschiedener Restrukturierungsoptionen; Entwicklung eines Standortverlagerungskonzepts (4 Monate)</li>
+          <li><span class="lead">Ostdeutscher Energiekonzern - Performance-Programm:</span> Implementierung eines Performance-Programms mit EUR 100M-Einsparziel: 200 Ideen zu konkreten Maßnahmen detailliert; Meilensteine mit Fachabteilungen abgestimmt; Tracking-Tool entwickelt und an internes PMO übergeben (3 Monate)</li>
+        </ul>
+      </div>
+
+      <div class="job">
+        <div class="job-head">
+          <div class="job-co">PriceWaterhouseCoopers AG – Management Consultant</div>
+          <div class="job-meta">Frankfurt | Apr 2014 – Mär 2017</div>
+        </div>
+        <ul class="dash">
+          <li><span class="lead">Internationales Pharmaunternehmen - M&amp;A Carve-Out Real Estate:</span> Teilprojektleitung Real Estate in pharmazeutischem Carve-Out: Transferstrategie für &gt;70 Standorte weltweit; Koordination von Mitarbeiter- und Arbeitsplatzumzügen; digitale Übergabe von &gt;10.000 Verträgen, Lieferanten- und Kundendokumenten an Käufer (7 Monate)</li>
+          <li><span class="lead">Tochter von globalen Logistikdienstleister - Global Accounting Shared Service Center:</span> PMO-Lead für Tochterunternehmen: Standardisierung von Buchhaltungsaktivitäten und Verlagerung in länderübergreifende SSCs; Steuerung von Programm-Reporting und Varianzanalyse vs. Business Case (EUR 630M Einsparungen über 10 Jahre); simultane Multi-Länder-Implementierung von 14 Ländern gesteuert (14 Monate)</li>
+          <li><span class="lead">PwC intern - Shared Service Center Aufbau:</span> Teilprojektleitung: Gestaltung, Organisation und Moderation von Prozess-Capture-Workshops; Dokumentation und Transfer von &gt;60 Prozessen in Organisationshandbuch; digitale Integration mit Ticketing-System (5 Monate)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-head">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#213D78" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span class="section-title">Kenntnisse</span>
+      </div>
+      <hr class="sec-rule">
+      <div class="skill-row">
+        <div class="skill-category">Methoden</div>
+        <div class="skill-list">Post-Merger-Integration | Carve-Out | PMO / Stage-Gate | Shared Services Setup | Lean / Prozessharmonisierung | Finance Transformation | Projekt &amp; Performance Management | Agiles PM (Scrum)</div>
+      </div>
+      <div class="skill-row">
+        <div class="skill-category">IT Werkzeuge</div>
+        <div class="skill-list">SAP (SD, MM) | SAP IBP | Power BI | MS Excel (inkl. VBA) | Python | MS Project | Jira | Confluence | PowerPoint | KI-Tools (Claude, OpenAI)</div>
+      </div>
+      <div class="skill-row">
+        <div class="skill-category">Sektoren</div>
+        <div class="skill-list">Energie &amp; Versorgungsunternehmen | Industrie &amp; Maschinenbau | Logistik &amp; Transport | Chemie &amp; Pharmazie | Automobil (OEM, Tier 1)</div>
+      </div>
+      <div class="skill-row">
+        <div class="skill-category">Sprachen</div>
+        <div class="skill-list">Deutsch (Muttersprache) | Englisch (verhandlungssicher) | Spanisch (Grundkenntnisse)</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-head">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#213D78" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        <span class="section-title">Ausbildung</span>
+      </div>
+      <hr class="sec-rule">
+      <div class="edu">
+        <div class="edu-head">
+          <div class="edu-title">Diplom-Wirtschaftsingenieur (Dipl.-Ing.) <span class="edu-note">– Technische Universität Berlin</span></div>
+          <div class="edu-year">Okt 2006 – Mär 2014</div>
+        </div>
+        <ul class="dash">
+          <li>Energiemärkte &amp; Handel | Logistiksysteme | Strategisches Management | Technologie Management | Klimaökonomik</li>
+        </ul>
+      </div>
+      <div class="edu">
+        <div class="edu-head">
+          <div class="edu-title">Applied Machine Learning &amp; Artificial Intelligence <span class="edu-note">– Emeritus Institute / Columbia University</span></div>
+          <div class="edu-year">2020</div>
+        </div>
+        <ul class="dash">
+          <li>Supervised/Unsupervised Learning, Deep Learning, NLP, Generative AI, Full Model Lifecycle</li>
+          <li>Python, TensorFlow, PyTorch, Scikit-learn</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-head">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#213D78" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.79 13.88 17 23l-5-3-5 3 1.21-9.12"/></svg>
+        <span class="section-title">Zertifizierungen</span>
+      </div>
+      <hr class="sec-rule">
+      <div class="cert-row">
+        <div class="cert-name">Professional Scrum Master I (PSM I) <span class="cert-issuer">– scrum.org</span></div>
+        <div class="cert-year">2018</div>
+      </div>
+      <div class="cert-row">
+        <div class="cert-name">Climate Innovation Business Plan Entwicklung <span class="cert-issuer">– EIT Climate-KIC</span></div>
+        <div class="cert-year">2013</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

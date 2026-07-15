@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="{{LANG}}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{NAME}} — CV</title>
+<style>
+  /* ============================================================
+     cv-template-dach.html — "Executive DACH" layout (photo header)
+     ------------------------------------------------------------
+     A polished, human-facing single-column CV for DACH/European
+     markets where a professional photo is expected. Reproduces the
+     look of a designed PowerPoint/Deckblatt CV: rounded blue header
+     box with photo, icon-tagged section headers, centered competency
+     pills, colored project titles, a two-column skills table.
+
+     Still ATS-conscious: single column, real selectable text, static
+     sans font, ligatures disabled so PDF text extraction stays clean.
+     Render with generate-pdf.mjs (headless Chromium) exactly like
+     cv-template.html. Photos are penalized by US/UK/many-market ATS,
+     so use this template only for DACH/Europe; for ATS-first markets
+     use cv-template.html (photoless).
+     ============================================================ */
+  * {
+    margin: 0; padding: 0; box-sizing: border-box;
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "clig" 0, "dlig" 0;
+  }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  :root {
+    --accent:      hsl(209, 61%, 41%);   /* name, titles, company, project titles */
+    --accent-dark: hsl(213, 58%, 31%);   /* section-title text, period labels */
+    --chip-border: hsl(205, 55%, 79%);
+    --rule:        #d6dde5;
+    --body:        #333333;
+    --muted:       #6b7683;
+  }
+
+  body {
+    font-family: 'Liberation Sans', 'Helvetica Neue', Arial, 'DejaVu Sans', sans-serif;
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--body);
+    background: #ffffff;
+  }
+  .page { width: 100%; max-width: {{PAGE_WIDTH}}; margin: 0 auto; }
+
+  /* ============ HEADER ============ */
+  .header {
+    display: flex; justify-content: space-between; align-items: center; gap: 18px;
+    background: linear-gradient(135deg, hsl(205,80%,97%), hsl(205,68%,92%));
+    border: 1px solid hsl(205,55%,85%);
+    border-radius: 14px;
+    padding: 16px 22px;
+    margin-bottom: 18px;
+  }
+  .header-left { flex: 1; }
+  .header h1 {
+    font-size: 30px; font-weight: 700; color: var(--accent);
+    letter-spacing: -0.01em; line-height: 1.05; margin-bottom: 2px;
+  }
+  .header .subtitle {
+    font-size: 13px; font-weight: 700; color: var(--accent-dark); margin-bottom: 10px;
+  }
+  .contact-grid {
+    display: grid; grid-template-columns: auto auto; gap: 5px 26px;
+    font-size: 10.5px; color: #33475b; width: fit-content;
+  }
+  .contact-grid a { color: #33475b; text-decoration: none; white-space: nowrap; }
+  .ci { display: inline-flex; align-items: center; gap: 7px; }
+  .ci svg { flex: none; }
+  .cv-photo {
+    width: 104px; height: 118px; object-fit: cover;
+    border-radius: 10px; border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px hsl(205,40%,78%);
+  }
+
+  /* ============ SECTIONS ============ */
+  .section { margin-bottom: 15px; }
+  .section-head {
+    display: table; width: 100%;
+    border-bottom: 1.6px solid var(--rule); padding-bottom: 4px; margin-bottom: 9px;
+  }
+  .section-icon {
+    display: table-cell; width: 27px; vertical-align: middle; color: var(--accent);
+  }
+  .section-icon svg { display: block; }
+  .section-title {
+    display: table-cell; vertical-align: middle;
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--accent-dark);
+  }
+
+  /* ============ PROFIL & COMPETENCIES ============ */
+  .summary-text { font-size: 11px; line-height: 1.6; color: #2f2f2f; text-align: justify; }
+  .competencies { display: flex; flex-wrap: wrap; justify-content: center; gap: 7px 8px; margin-top: 10px; }
+  .competency-tag {
+    font-size: 10px; font-weight: 500; color: var(--accent);
+    background: #ffffff; padding: 4px 11px; border-radius: 13px; border: 1px solid var(--chip-border);
+  }
+
+  /* ============ EXPERIENCE ============ */
+  .job { margin-bottom: 11px; }
+  .job-header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 3px; }
+  .job-company { font-size: 11.5px; font-weight: 700; color: var(--accent-dark); }
+  .job-company .role { font-weight: 400; color: #444; }
+  .job-period { font-size: 10.5px; font-weight: 700; color: var(--accent-dark); white-space: nowrap; }
+  .job ul { list-style: none; margin: 0; padding: 0; }
+  .job li { position: relative; padding-left: 14px; font-size: 10.5px; line-height: 1.5; color: var(--body); margin-bottom: 3px; }
+  .job li::before { content: "–"; position: absolute; left: 0; top: 0; color: var(--accent); font-weight: 700; }
+  .job li .p { color: var(--accent); font-weight: 600; }
+  .job li .dur { color: var(--muted); }
+
+  /* ============ SKILLS (2-col) ============ */
+  .skills-table { display: table; width: 100%; }
+  .skill-row { display: table-row; }
+  .skill-row > div { display: table-cell; padding-bottom: 5px; vertical-align: top; }
+  .skill-label { color: var(--accent-dark); font-weight: 700; width: 118px; font-size: 10.5px; }
+  .skill-val { color: var(--body); font-size: 10.5px; }
+
+  /* ============ EDUCATION ============ */
+  .edu-item { margin-bottom: 7px; }
+  .edu-header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .edu-title { font-weight: 700; font-size: 11px; color: var(--accent-dark); }
+  .edu-year { font-size: 10px; color: var(--muted); white-space: nowrap; }
+  .edu-desc { font-size: 10px; color: #555; margin-top: 1px; padding-left: 14px; position: relative; line-height: 1.45; }
+  .edu-desc::before { content: "–"; position: absolute; left: 0; color: var(--accent); }
+
+  /* ============ CERTIFICATIONS ============ */
+  .cert-table { display: table; width: 100%; }
+  .cert-item { display: table-row; }
+  .cert-item > * { display: table-cell; vertical-align: baseline; padding-bottom: 4px; }
+  .cert-title { font-size: 10.5px; color: var(--accent-dark); font-weight: 600; }
+  .cert-org { color: #555; padding-left: 6px; }
+  .cert-year { font-size: 10px; color: var(--muted); text-align: right; white-space: nowrap; }
+
+  /* ============ PRINT / PAGE-BREAKS ============ */
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+  .header, .edu-item, .cert-item, .competency-tag, .job { break-inside: avoid; page-break-inside: avoid; }
+  .section-head, .job-company { break-after: avoid; page-break-after: avoid; }
+
+  /* RTL / CJK fallbacks (parity with cv-template.html) */
+  html[lang="ar"] body { direction: rtl; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+  html[lang="ar"] .cv-photo { order: -1; }
+  html[lang="ja"] body { font-family: 'Liberation Sans', Arial, 'Hiragino Sans', 'Yu Gothic', 'Noto Sans CJK JP', Meiryo, sans-serif; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ============ HEADER ============ -->
+  <div class="header">
+    <div class="header-left">
+      <h1>{{NAME}}</h1>
+      <div class="subtitle">{{SUBTITLE}}</div>
+      <div class="contact-grid">
+        <span class="ci"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg><a href="tel:{{PHONE_TEL}}">{{PHONE}}</a></span>
+        <span class="ci"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg><a href="mailto:{{EMAIL}}">{{EMAIL}}</a></span>
+        <span class="ci"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg><span>{{LOCATION}}</span></span>
+        <span class="ci"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.44-2.13 2.94v5.67H9.36V9h3.41v1.56h.05c.47-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.55C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.72C24 .77 23.2 0 22.22 0z"/></svg><a href="{{LINKEDIN_URL}}">{{LINKEDIN_DISPLAY}}</a></span>
+      </div>
+    </div>
+    <img class="cv-photo" src="{{PHOTO_SRC}}" alt="{{NAME}}">
+  </div>
+
+  <!-- ============ PROFIL & KOMPETENZEN ============ -->
+  <div class="section">
+    <div class="section-head">
+      <span class="section-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg></span>
+      <span class="section-title">{{SECTION_SUMMARY}}</span>
+    </div>
+    <div class="summary-text">{{SUMMARY_TEXT}}</div>
+    <div class="competencies">
+      {{COMPETENCIES}}
+    </div>
+  </div>
+
+  <!-- ============ BERUFSERFAHRUNG ============ -->
+  <div class="section">
+    <div class="section-head">
+      <span class="section-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
+      <span class="section-title">{{SECTION_EXPERIENCE}}</span>
+    </div>
+    {{EXPERIENCE}}
+  </div>
+
+  <!-- ============ KENNTNISSE ============ -->
+  <div class="section">
+    <div class="section-head">
+      <span class="section-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+      <span class="section-title">{{SECTION_SKILLS}}</span>
+    </div>
+    <div class="skills-table">
+      {{SKILLS_ROWS}}
+    </div>
+  </div>
+
+  <!-- ============ AUSBILDUNG ============ -->
+  <div class="section">
+    <div class="section-head">
+      <span class="section-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.5 3 6 3s6-2 6-3v-5"/></svg></span>
+      <span class="section-title">{{SECTION_EDUCATION}}</span>
+    </div>
+    {{EDUCATION}}
+  </div>
+
+  <!-- ============ ZERTIFIZIERUNGEN ============ -->
+  <div class="section">
+    <div class="section-head">
+      <span class="section-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5"/></svg></span>
+      <span class="section-title">{{SECTION_CERTIFICATIONS}}</span>
+    </div>
+    <div class="cert-table">
+      {{CERTIFICATIONS}}
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
