@@ -97,6 +97,11 @@ function normalizeTextForATS(html) {
     // wrong for half of users \u2014 better to leave the glyph than emit bad data.
     t = t.replace(/\u20AC/g, () => { bump('euro', 1); return 'EUR '; });
     t = t.replace(/\u00A3/g, () => { bump('pound', 1); return 'GBP '; });
+    // Markdown bold from tailored CV builders (SUMMARY_TEXT uses **…**).
+    t = t.replace(/\*\*([^*]+?)\*\*/g, (_, inner) => {
+      bump('markdown-bold', 1);
+      return `<strong>${inner}</strong>`;
+    });
     return t;
   }
 }
@@ -216,13 +221,7 @@ export function repoRelativeManifestPath(pathValue) {
 export function injectPrintPageCss(html, format = 'a4') {
   const normalizedFormat = String(format || 'a4').toLowerCase();
   const pageSize = normalizedFormat === 'letter' ? 'Letter' : 'A4';
-  // Full-bleed opt-in: templates that draw their own edge-to-edge chrome
-  // (e.g. cv-template-styled.html's header band) declare
-  // <meta name="pdf-margin" content="0"> and handle spacing via CSS padding.
-  // Default (no meta tag) keeps the classic print margins.
-  const fullBleed = /<meta\s+name=["']pdf-margin["']\s+content=["']0["']/i.test(html);
-  const pageMargin = fullBleed ? '0' : PDF_PAGE_MARGIN;
-  const pageStyle = `<style id="career-ops-page-setup">\n@page { size: ${pageSize}; margin: ${pageMargin}; }\n</style>`;
+  const pageStyle = `<style id="career-ops-page-setup">\n@page { size: ${pageSize}; margin: ${PDF_PAGE_MARGIN}; }\n</style>`;
 
   if (/<\/head>/i.test(html)) {
     return html.replace(/<\/head>/i, `${pageStyle}\n</head>`);
@@ -418,7 +417,13 @@ export async function inlineLocalFonts(html) {
  *
  * @param {string} html - Full HTML document to render.
  * @param {string} outputPath - Absolute path to write the PDF to.
- * @param {{format?: 'a4'|'letter', baseDir?: string, reportNum?: string, inputPath?: string}} [opts]
+ * @param {{
+ *   format?: 'a4'|'letter',
+ *   baseDir?: string,
+ *   reportNum?: string,
+ *   inputPath?: string,
+ *   launchBrowser?: (options: {headless: boolean}) => Promise<import('playwright').Browser>
+ * }} [opts]
  * @returns {Promise<{outputPath: string, pageCount: number, size: number}>}
  */
 export async function renderHtmlToPdf(html, outputPath, opts = {}) {
@@ -438,8 +443,10 @@ export async function renderHtmlToPdf(html, outputPath, opts = {}) {
   const { writeFile, unlink } = await import('fs/promises');
   await writeFile(tmpHtmlPath, html, 'utf-8');
 
-  const browser = await chromium.launch({ headless: true });
+  const launchBrowser = opts.launchBrowser || ((options) => chromium.launch(options));
+  let browser = null;
   try {
+    browser = await launchBrowser({ headless: true });
     const page = await browser.newPage();
 
     // Load from file:// so the page origin allows local subresources
@@ -483,9 +490,17 @@ export async function renderHtmlToPdf(html, outputPath, opts = {}) {
 
     return { outputPath, pageCount, size: pdfBuffer.length };
   } finally {
-    await browser.close();
+    if (browser) {
+      await browser.close().catch((err) => {
+        console.warn(`⚠️  Browser cleanup failed: ${err.message}`);
+      });
+    }
     // Clean up temp file
-    await unlink(tmpHtmlPath).catch(() => {});
+    await unlink(tmpHtmlPath).catch((err) => {
+      if (err?.code !== 'ENOENT') {
+        console.warn(`⚠️  Temporary HTML cleanup failed: ${err.message}`);
+      }
+    });
   }
 }
 

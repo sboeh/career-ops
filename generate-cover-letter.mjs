@@ -17,6 +17,7 @@ import { readFileSync, existsSync, mkdirSync } from "fs";
 import { dirname, resolve, basename, join } from "path";
 import { fileURLToPath, pathToFileURL } from "url";
 import { parseArgs } from "util";
+import { resolveTemplate } from "./cv-templates.mjs";
 
 const OUTPUT_ROOT = resolve("output");
 
@@ -80,11 +81,9 @@ function buildDateline(letter) {
 function buildAchievementsBlock(achievements) {
   if (!achievements || !achievements.length) return "";
   const items = achievements.map(ach => {
-    // Strip a trailing comma from the lead before appending one, so a lead
-    // supplied with (or without) its own trailing comma never doubles up.
-    const lead = escapeHtml((ach.lead || "").replace(/,\s*$/, ""));
+    const lead = escapeHtml(ach.lead || "");
     const impact = escapeHtml(ach.impact || "");
-    return `    <li><b class="lead">${lead},</b> ${impact}</li>`;
+    return `    <li><b>${lead},</b> ${impact}</li>`;
   }).join("\n");
   return `<ul class="achievements">\n${items}\n  </ul>`;
 }
@@ -105,44 +104,30 @@ function buildFootnotesBlock(footnotes) {
   return `<div class="footnotes">\n${lines}\n  </div>`;
 }
 
-// Recipient address box for the styled template. Any missing field is
-// omitted rather than fabricated (see recipient.name / .company / .street / .city).
-function buildRecipientBlock(recipient, language) {
-  if (!recipient) return "";
-  const lines = [];
-  if ((language || "en").startsWith("de")) lines.push("An:");
-  if (recipient.name) lines.push(`<span class="addr-bold">${escapeHtml(recipient.name)}</span>`);
-  if (recipient.company) lines.push(`<span class="addr-bold">${escapeHtml(recipient.company)}</span>`);
-  if (recipient.street) lines.push(escapeHtml(recipient.street));
-  if (recipient.city) lines.push(escapeHtml(recipient.city));
-  return lines.join("\n");
+// Resolve the cover-letter template through the shared resolver so a
+// `cover_letter.template` profile default, an explicit `payload.template`, and
+// installed template packs are all honored. Any resolver failure (no profile,
+// no templates dir, bad config) falls back to the base template, preserving the
+// original hardcoded behavior.
+export function resolveCoverTemplatePath(payload = {}, opts = {}) {
+  const scriptDir = dirname(fileURLToPath(import.meta.url));
+  const base = resolve(scriptDir, "templates", "cover-letter-template.html");
+  try {
+    return resolveTemplate("cover", payload.template, { format: "html", fallback: true, ...opts });
+  } catch {
+    return base;
+  }
 }
 
-// Sign-off block: salutation + optional signature image + typed name.
-// Distinct from `letter.closing` (the final body paragraph) — this renders
-// the literal "Kind regards, [signature], Name" block beneath it.
-function buildSignoffBlock(signoff, candidate) {
-  if (!signoff) return "";
-  const text = escapeHtml(signoff.text || "Kind regards,");
-  const name = escapeHtml(signoff.name || candidate.name || "");
-  const img = signoff.image
-    ? `<img class="signature-img" src="${escapeHtml(signoff.image)}" alt="Signature ${name}">`
-    : "";
-  return `<div class="signoff">\n    <div>${text}</div>\n    ${img}\n    <div class="signature-name">${name}</div>\n  </div>`;
-}
-
-export function buildHtml(payload, opts = {}) {
+export function buildHtml(payload, templatePath) {
   _require(payload, ["candidate", "letter"], "payload");
   const candidate = payload.candidate;
   const letter = payload.letter;
   _require(candidate, ["name"], "candidate");
   _require(letter, ["role_title", "opening", "profile_intro"], "letter");
 
-  const scriptDir = dirname(fileURLToPath(import.meta.url));
-  const templatePath = opts.templateFile
-    ? resolve(opts.templateFile)
-    : resolve(scriptDir, "templates", "cover-letter-template.html");
-  let html = readFileSync(templatePath, "utf-8");
+  const resolvedPath = templatePath || resolveCoverTemplatePath(payload);
+  let html = readFileSync(resolvedPath, "utf-8");
 
   // Optional salutation (e.g. "Dear Jane Smith,"). Omitted -> no salutation,
   // preserving the original behavior for payloads that don't set it.
@@ -152,12 +137,6 @@ export function buildHtml(payload, opts = {}) {
     ? `<p class="language-closing">${escapeHtml(letter.language_closing)}</p>`
     : "";
   const problemsBlock = letter.problems_section ? `<p>${escapeHtml(letter.problems_section)}</p>` : "";
-  const linkedinUrl = candidate.linkedin ? asUrl(candidate.linkedin) : "";
-  // Footer bar shows only the profile slug (e.g. "sebastian-boehmer-881a269"),
-  // not the full "linkedin.com/in/..." path — the href still carries the full URL.
-  const linkedinDisplay = candidate.linkedin
-    ? candidate.linkedin.replace(/^https?:\/\//, "").split("/").filter(Boolean).pop()
-    : "";
 
   const replacements = {
     "{{NAME}}": escapeHtml(candidate.name),
@@ -173,18 +152,6 @@ export function buildHtml(payload, opts = {}) {
     "{{CLOSING_BLOCK}}": closingBlock,
     "{{LANGUAGE_CLOSING_BLOCK}}": languageClosingBlock,
     "{{FOOTNOTES_BLOCK}}": buildFootnotesBlock(letter.footnotes),
-    // Styled-template-only tokens (templates/cover-letter-template-styled.html).
-    // Ignored by the plain template, since these tokens don't appear there.
-    "{{LANG}}": escapeHtml(letter.language || "en"),
-    "{{PAGE_WIDTH}}": escapeHtml(letter.page_width || "210mm"),
-    "{{TITLE}}": escapeHtml(candidate.title || ""),
-    "{{RECIPIENT_BLOCK}}": buildRecipientBlock(letter.recipient, letter.language),
-    "{{SIGNOFF_BLOCK}}": buildSignoffBlock(letter.signoff, candidate),
-    "{{PHONE}}": escapeHtml(candidate.phone || ""),
-    "{{EMAIL}}": escapeHtml(candidate.email || ""),
-    "{{LOCATION}}": escapeHtml(candidate.location || ""),
-    "{{LINKEDIN_URL}}": escapeHtml(linkedinUrl),
-    "{{LINKEDIN_DISPLAY}}": escapeHtml(linkedinDisplay),
   };
 
   // Single-pass substitution: each {{TOKEN}} is replaced exactly once against
@@ -198,10 +165,9 @@ export function buildHtml(payload, opts = {}) {
 async function main() {
   const { values: args } = parseArgs({
     options: {
-      payload:  { type: "string" },
-      out:      { type: "string" },
-      template: { type: "string" },
-      help:     { type: "boolean", short: "h" },
+      payload: { type: "string" },
+      out:     { type: "string" },
+      help:    { type: "boolean", short: "h" },
     },
     strict: false,
   });
@@ -209,19 +175,12 @@ async function main() {
   if (args.help || !args.payload) {
     console.log(`
 Usage:
-  node generate-cover-letter.mjs --payload payload.json [--out output/path.pdf] [--template path/to/template.html]
+  node generate-cover-letter.mjs --payload payload.json [--out output/path.pdf]
 
   --payload   Path to the JSON payload file (required)
   --out       Override output path from payload (optional)
-  --template  Template file to render (optional, default: templates/cover-letter-template.html).
-              Use templates/cover-letter-template-styled.html for the visual/DACH variant.
 `);
     process.exit(args.help ? 0 : 1);
-  }
-
-  if (args.template && !existsSync(resolve(args.template))) {
-    console.error(`ERROR: template file not found: ${resolve(args.template)}`);
-    process.exit(1);
   }
 
   const payloadPath = resolve(args.payload);
@@ -250,7 +209,7 @@ Usage:
   const { renderHtmlToPdf } = await import("./generate-pdf.mjs");
 
   try {
-    const html = buildHtml(payload, { templateFile: args.template });
+    const html = buildHtml(payload);
     const outputPath = resolve(payload.output_path);
     await renderHtmlToPdf(html, outputPath, { format: "a4" });
     console.log(`\nCover letter PDF: ${payload.output_path}`);
